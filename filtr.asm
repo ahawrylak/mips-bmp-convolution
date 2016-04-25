@@ -11,14 +11,14 @@ ask_input_msg:			.asciiz	"Input file name:\n"
 header: 			.space   54 	
 input_file:			.space	128 	
 ask_output_msg:			.asciiz	"Output file name:\n"
-filter_prompt:			.asciiz "\nChoose filter:\n1. lowpass\n2. highpass\n3. edge detection\n"
+filter_prompt:			.asciiz "\nChoose filter:\n1. lowpass\n2. highpass\n"
 input_err:			.asciiz "\nInput image not found! Restarting...\n\n"
 bmp_format_err:			.asciiz	"\nInput image not 24b bitmap! Restarting...\n\n"
 not_bmp_err: 			.asciiz "\nInput file is not a bitmap! Restarting...\n\n"
 output_err: 			.asciiz "\nOutput file error! Restarting...\n"
 output_file: 			.space  128	
-lowpass:			.byte   1,2,1,2,4,2,1,2,1
-highpass:			.byte 	-1,-1,-1,-1,38,-1,-1,-1,-1
+lowpass:			.byte   1,1,1,1,8,1,1,1,1
+highpass:			.byte 	0,-1,0,-1,16,-1,0,-1,0
 buffer:				.space	1
 
 
@@ -57,28 +57,28 @@ main:
 	li 		$t1, 128		# length of the output_file
 	li 		$t2, 0			
 	
-outputRemoveNewLine:
-	beqz		$t1, newLineLoopInit			# if end of string, jump to remove newline from input string
+out_remove_newline:
+	beqz		$t1, newline_loop_init			# if end of string, jump to remove newline from input string
 	subu		$t1, $t1, 1				# decrement the index
 	lb		$t2, output_file($t1)			# load the character at current index position
-	bne		$t2, $t0, outputRemoveNewLine		# if current character != '\n', jump to loop beginning
+	bne		$t2, $t0, out_remove_newline		# if current character != '\n', jump to loop beginning
 	li		$t0, 0			
 	sb		$t0, output_file($t1) 
 	
-newLineLoopInit:
+newline_loop_init:
 	li		$t0, '\n'	
 	li		$t1, 128	# length of the input_file
 	li		$t2, 0		
 	
-newLineLoop:
-	beqz	$t1, newLineLoopEnd	# if end of string, jump to loop end
-	subu	$t1, $t1, 1			# decrement the index
+newline_loop:
+	beqz		$t1, newline_loop_end	# if end of string, jump to loop end
+	subu		$t1, $t1, 1			# decrement the index
 	lb		$t2, input_file($t1)	# load the character at current index position
-	bne		$t2, $t0, newLineLoop	# if current character != '\n', jump to loop beginning
+	bne		$t2, $t0, newline_loop	# if current character != '\n', jump to loop beginning
 	li		$t0, 0			# else store null character
 	sb		$t0, input_file($t1) # and overwrite newline character with null
 	
-newLineLoopEnd:
+newline_loop_end:
 	
 	#open input file
 	li		$v0, 13		# syscall 13, open file
