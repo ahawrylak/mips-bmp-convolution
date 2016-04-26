@@ -18,7 +18,7 @@ not_bmp_err: 			.asciiz "\nInput file is not a bitmap! Restarting...\n\n"
 output_err: 			.asciiz "\nOutput file error! Restarting...\n"
 output_file: 			.space  128	
 lowpass:			.byte   1,1,1,1,8,1,1,1,1
-highpass:			.byte 	0,-1,0,-1,16,-1,0,-1,0
+highpass:			.byte 	0,-1,0,-1,20,-1,0,-1,0
 buffer:				.space	1
 
 
@@ -262,11 +262,11 @@ loop_continue:
 	
 	
 	# normalization
-	bge		$t2, -128, continue1
-	li 		$t2, -128
+	bge		$t2, 0, continue1
+	li 		$t2, 0
 continue1:
-	ble 		$t2, 128, continue2
-	li 		$t2, 128
+	ble 		$t2, 255, continue2
+	li 		$t2, 255
 continue2:
 
 	
