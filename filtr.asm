@@ -1,6 +1,6 @@
 ### ADRIAN HAWRYLAK 3I1
 ### ARKO projekt duzy MIPS
-### filtr gorno/dolno przepustowy
+### filtr konwolucyjny (gorno/dolno przepustowy)
 ######################################
 
 
@@ -13,13 +13,11 @@ input_file:			.space	128
 ask_output_msg:			.asciiz	"Output file name:\n"
 filter_prompt:			.asciiz "\nChoose filter:\n1. lowpass\n2. highpass\n"
 input_err:			.asciiz "\nInput image not found! Restarting...\n\n"
-bmp_format_err:			.asciiz	"\nInput image not 24b bitmap! Restarting...\n\n"
-not_bmp_err: 			.asciiz "\nInput file is not a bitmap! Restarting...\n\n"
 output_err: 			.asciiz "\nOutput file error! Restarting...\n"
 output_file: 			.space  128	
-lowpass:			.byte   1,1,1,1,8,1,1,1,1
-highpass:			.byte 	0,-1,0,-1,20,-1,0,-1,0
-buffer:				.space	1
+lowpass:			.byte   1,1,1,1,4,1,1,1,1
+highpass:			.byte 	0,-1,0,-1,16,-1,0,-1,0
+buff:				.space	1
 
 
 
@@ -109,11 +107,11 @@ newline_loop_end:
 	
 	#read image data into array
 	li		$v0, 9		# syscall 9, allocate heap memory
-	move		$a0, $s1	# load size of data section
+	move		$a0, $s1	# data section size
 	syscall
-	move		$s2, $v0	# store the base address of the array in $s2
+	move		$s2, $v0	# pixel array address in $s2
 	
-	li		$v0, 14		# syscall 14, read from file
+	li		$v0, 14		# read from file
 	move		$a0, $s0	# load file descriptor
 	move		$a1, $s2	# load base address of array
 	move		$a2, $s1	# load size of data section
@@ -123,7 +121,7 @@ newline_loop_end:
 	move		$a0, $s0		# move the file descriptor into argument register
 	li		$v0, 16			# syscall 16, close file
 	syscall
-	la 		$s3, buffer  #load the address of the buffer into $s3
+	la 		$s3, buff  #load the address of the buff into $s3
 
 
   	#print filter type string
@@ -153,7 +151,7 @@ load_highpass:
 #############################################################################
 # $s1 - size of data section
 # $s2 - start of pixel array
-# $s3 - buffer address
+# $s3 - buff address (to store output file)
 # $s7 - width
 # $s4 - height
 # $t0 - loop counter (to 3* overall number of pixels)
@@ -178,7 +176,8 @@ loop:
 	sub		$t5, $t1, $s7	# calculate wanted value address 
 	addi		$t5, $t5, -3
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24 
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
@@ -187,7 +186,8 @@ loop:
 	lb 		$t8, 1($t9)
 	sub 		$t5, $t1, $s7	# calculate wanted value address 
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24 	
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
@@ -196,7 +196,8 @@ loop:
 	sub 		$t5, $t1, $s7	# calculate wanted value address 
 	addi 		$t5, $t5, 3
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24 	
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
@@ -204,14 +205,16 @@ loop:
 	lb 		$t8, 3($t9)		# calculate wanted value address 
 	addi 		$t5, $t1, -3
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24 	
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
 	# center
 	lb 		$t8, 4($t9)
 	lb 		$t4, ($t1)
-	jal		shift
+	sll 		$t4, $t4, 24 	
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
@@ -219,7 +222,8 @@ loop:
 	lb 		$t8, 5($t9)		# calculate wanted value address 
 	addi 		$t5, $t1, 3
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24 	
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
@@ -228,7 +232,8 @@ loop:
 	add 		$t5, $t1, $s7	# calculate wanted value address 
 	addi 		$t5, $t5, -3
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
@@ -236,7 +241,8 @@ loop:
 	lb 		$t8, 7($t9)
 	add 		$t5, $t1, $s7	# calculate wanted value address 
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24 	
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
 	
@@ -245,20 +251,16 @@ loop:
 	add 		$t5, $t1, $s7	# calculate wanted value address 
 	addi 		$t5, $t5, 3
 	lb 		$t4, ($t5)
-	jal		shift
+	sll 		$t4, $t4, 24 	
+	srl		$t4, $t4, 24
 	mul 		$t6, $t8, $t4
 	add 		$t7, $t7, $t6
-	j		loop_continue
 
-shift:
-	sll 		$t4, $t4, 24
-	srl		$t4, $t4, 24
-	jr		$ra
 
 			
 loop_continue:			
 	# divide sum of all wages 
-	div 		$t2, $t7, 16
+	div 		$t2, $t7, 12
 	
 	
 	# normalization
@@ -290,15 +292,15 @@ write_file:
 	#open output file
 	li		$v0, 13
 	la		$a0, output_file
-	li		$a1, 1		#1 to write
+	li		$a1, 1		
 	li		$a2, 0
 	syscall
-	move		$t1, $v0	#output file descriptor in $t1
+	move		$t1, $v0	# copy file descriptor
 	
 	#confirm that file exists 
 	bltz		$t1, outputFileErrorHandler
 
-	li		$v0, 15		#prep $v0 for write syscall
+	li		$v0, 15	
 	move 		$a0, $t1
 	la		$a1, header
 	addi    	$a2, $zero,54
@@ -307,7 +309,7 @@ write_file:
 	#write to output file
 	li		$v0, 15		
 	move 		$a0, $t1
-	la		$a1, buffer
+	la		$a1, buff
 	move  		$a2, $s1
 	syscall
 	
@@ -327,21 +329,7 @@ inputFileErrorHandler:
 	la		$a0, input_err		# print the message
 	syscall
 	j		main
-	
-improperFormatHandler:
-	#print file input error message
-	li		$v0, 4			# syscall 4, print string
-	la		$a0, bmp_format_err	# print the message
-	syscall
-	j		main
-	
-inputNotBMPHandler:
-	#print file input error message
-	li		$v0, 4			# syscall 4, print string
-	la		$a0, not_bmp_err	# print the message
-	syscall
-	j		main
-	
+
 outputFileErrorHandler:
 	#print file output error message
 	li		$v0, 4			# syscall 4, print string
